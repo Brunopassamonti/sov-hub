@@ -4,13 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SOV">
-<meta name="theme-color" content="#0C0C14">
-<meta name="description" content="Sistema de Operação de Vendas — Bruno Passamonti">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="apple-touch-startup-image" href="icon-512.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0A0A0F">
 <title>SOV</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -735,6 +730,55 @@ select option { background: var(--surface); }
     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
     TRADE
   </div>
+  <div class="tab" data-screen="config" onclick="goScreen(this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    CONFIG
+  </div>
+</div>
+
+
+<!-- ══ CONFIG SCREEN ══ -->
+<div id="screen-config" class="screen" style="display:none;padding-bottom:100px">
+  <div class="section-title" style="padding:20px 20px 8px">⚙️ Configurações</div>
+
+  <!-- API Anthropic -->
+  <div class="card" style="margin:0 16px 12px">
+    <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:12px">🤖 IA — Anthropic API</div>
+    <div class="field">
+      <label class="label">Chave da API (x-api-key)</label>
+      <input id="cfg-api-key" type="password" placeholder="sk-ant-..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;box-sizing:border-box">
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Necessária para gerar roteiros, atas e insights com IA nas reuniões.</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-accent" onclick="salvarConfig()">Salvar</button>
+      <button class="btn btn-outline btn-sm" onclick="testarAPI()">Testar conexão</button>
+    </div>
+    <div id="cfg-api-status" style="margin-top:8px;font-size:12px"></div>
+  </div>
+
+  <!-- Apps Script -->
+  <div class="card" style="margin:0 16px 12px">
+    <div style="font-size:13px;font-weight:600;color:var(--teal);margin-bottom:12px">📊 Google Sheets — Apps Script</div>
+    <div class="field">
+      <label class="label">URL do Apps Script</label>
+      <input id="cfg-apps-script" type="text" placeholder="https://script.google.com/macros/s/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;color:var(--text);font-size:11px;box-sizing:border-box">
+    </div>
+    <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="salvarConfig()">Salvar URL</button>
+  </div>
+
+  <!-- Info -->
+  <div class="card" style="margin:0 16px 12px">
+    <div style="font-size:13px;font-weight:600;color:var(--sub);margin-bottom:8px">📱 Sobre o SOV Hub</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7">
+      <div>Versão: <span style="color:var(--text)">3.0</span></div>
+      <div>Storage: <span id="cfg-storage-size" style="color:var(--text)">—</span></div>
+      <div>Sync: <span style="color:var(--text)">Google Sheets via Apps Script</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-outline btn-sm" onclick="exportarDados()">Exportar dados</button>
+      <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)" onclick="if(confirm('Apagar TODOS os dados locais?'))limparDados()">Limpar dados</button>
+    </div>
+  </div>
 </div>
 
 </div><!-- /app -->
@@ -909,6 +953,7 @@ function goScreen(el) {
 }
 
 function _applyScreen(s) {
+  if(s==='config') setTimeout(renderConfig, 50);
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.screen===s));
   document.querySelectorAll('.screen').forEach(sc => sc.classList.toggle('active', sc.id==='screen-'+s));
 }
@@ -1527,7 +1572,8 @@ async function gerarGPT() {
   out.innerHTML='<div class="gpt-thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div> <span style="font-size:12px;color:var(--muted)">Gerando com IA...</span></div>';
 
   try {
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const apiKey=getAPIKey();if(!apiKey){out.textContent='Configure sua chave de API em Configurações → ⚙️';return;}
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     const d=await r.json();
     out.textContent=d.content?.[0]?.text||'Erro ao gerar.';
   } catch { out.textContent='Erro de conexão.'; }
@@ -1547,7 +1593,8 @@ async function gerarRoteiro(id) {
   document.getElementById('overlay').classList.add('open');
 
   try {
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const apiKey2=getAPIKey();if(!apiKey2){document.getElementById('modalBody').innerHTML='<div style="padding:20px;color:var(--muted)">Configure sua chave de API em ⚙️ Configurações.</div><button class="btn btn-outline" style="margin:0 20px" onclick="closeModal()">Fechar</button>';return;}
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey2,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     const d=await res.json();
     const txt=d.content?.[0]?.text||'Erro.';
     document.getElementById('modalBody').innerHTML=`
@@ -1748,13 +1795,9 @@ function empty(msg){return`<div style="padding:40px 20px;text-align:center;color
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openSearch();}});
 window.addEventListener('popstate', () => { if (navStack.length > 1) goBack(); });
 
-// ── SERVICE WORKER ──
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  });
-}
-
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
 initTopbar();
 updateTopbar();
 renderHome();
