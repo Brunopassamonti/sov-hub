@@ -569,7 +569,10 @@ select option{background:var(--s1)}
   <div id="homeReunioes" style="padding-bottom:24px"></div>
 
   <div class="section-label">LEMBRETES</div>
-  <div id="homeLembretes" style="padding-bottom:24px"></div>
+  <div id="homeLembretes" style="padding-bottom:8px"></div>
+
+  <div class="section-label" id="calSection" style="display:none">AGENDA — PRÓXIMOS 7 DIAS</div>
+  <div id="homeCalendar" style="padding-bottom:24px"></div>
 </div>
 
 <!-- CAPTURAR -->
@@ -608,6 +611,15 @@ select option{background:var(--s1)}
   <div style="display:flex;gap:6px;padding:12px 16px 0">
     <button class="btn btn-outline btn-sm" id="viewList" onclick="setFazerView('list')" style="color:var(--accent);border-color:var(--accent)">Lista</button>
     <button class="btn btn-outline btn-sm" id="viewKanban" onclick="setFazerView('kanban')">Kanban</button>
+    <button class="btn btn-outline btn-sm" id="viewTrello" onclick="setFazerView('trello')" style="color:#6B8FE8;border-color:rgba(62,107,232,.3)">🟦 Trello</button>
+  </div>
+
+  <div id="fazer-trello-view" style="display:none;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;color:var(--sub)">Sincronizando com Trello...</div>
+      <button class="btn btn-outline btn-sm" onclick="syncTrello()" style="color:#6B8FE8;border-color:rgba(62,107,232,.3)">↻ Sync</button>
+    </div>
+    <div id="trelloBoard"></div>
   </div>
 
   <div id="fazer-list-view">
@@ -621,7 +633,13 @@ select option{background:var(--s1)}
 
   <div class="section-label">REUNIÕES</div>
   <div id="reunList"></div>
-  <div style="padding:0 16px 8px"><button class="btn btn-outline btn-sm" onclick="openModal('reuniao')">+ Reunião</button></div>
+  <div style="padding:0 16px 8px;display:flex;gap:8px">
+    <button class="btn btn-outline btn-sm" onclick="openModal('reuniao')">+ Reunião</button>
+    <button class="btn btn-outline btn-sm" onclick="openModal('evento-cal')" style="color:var(--teal);border-color:rgba(62,207,178,.3)">+ Agenda</button>
+  </div>
+
+  <div class="section-label" id="calFazerSection" style="display:none">GOOGLE CALENDAR</div>
+  <div id="fazerCalendar" style="padding-bottom:8px"></div>
 
   <div class="section-label">CONTAS</div>
   <div id="contasList"></div>
@@ -831,6 +849,65 @@ select option{background:var(--s1)}
         <input id="cfg-apps-script" type="text" placeholder="https://script.google.com/..." style="font-size:11px">
       </div>
       <button class="btn btn-outline btn-sm" onclick="salvarConfig()">Salvar URL</button>
+    </div>
+  </div>
+
+  <!-- Google Calendar -->
+  <div class="cfg-section">
+    <div class="cfg-header">
+      <div class="cfg-icon" style="background:rgba(62,207,178,.08);border:1px solid rgba(62,207,178,.15)">📅</div>
+      <div>
+        <div style="font-size:14px;font-weight:600">Google Calendar</div>
+        <div style="font-size:11px;color:var(--muted)">Via n8n webhook</div>
+      </div>
+    </div>
+    <div class="cfg-body">
+      <div class="field">
+        <label class="label">URL — Buscar eventos (GET)</label>
+        <input id="cfg-cal-get" type="text" placeholder="https://brunopassamonti.app.n8n.cloud/webhook/sov-calendar" style="font-size:11px">
+      </div>
+      <div class="field">
+        <label class="label">URL — Criar evento (POST)</label>
+        <input id="cfg-cal-post" type="text" placeholder="https://brunopassamonti.app.n8n.cloud/webhook/sov-calendar-create" style="font-size:11px">
+      </div>
+      <div id="cfg-cal-status" style="font-size:12px;min-height:18px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-teal btn-sm" onclick="salvarConfig()" style="flex:1;justify-content:center">Salvar</button>
+        <button class="btn btn-outline btn-sm" onclick="testarCalendar()">Testar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trello -->
+  <div class="cfg-section">
+    <div class="cfg-header">
+      <div class="cfg-icon" style="background:rgba(62,107,232,.08);border:1px solid rgba(62,107,232,.15)">🟦</div>
+      <div>
+        <div style="font-size:14px;font-weight:600">Trello</div>
+        <div style="font-size:11px;color:var(--muted)">Sync com boards e cards</div>
+      </div>
+    </div>
+    <div class="cfg-body">
+      <div class="field">
+        <label class="label">API Key</label>
+        <input id="cfg-trello-key" type="text" placeholder="Cole sua API Key do Trello">
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Acesse: trello.com/app-key</div>
+      </div>
+      <div class="field">
+        <label class="label">Token</label>
+        <input id="cfg-trello-token" type="password" placeholder="Cole seu Token do Trello">
+      </div>
+      <div class="field">
+        <label class="label">ID do Board</label>
+        <input id="cfg-trello-board" type="text" placeholder="Ex: abc123def456">
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">URL do board: trello.com/b/<strong>ESTE_ID</strong>/nome</div>
+      </div>
+      <div id="cfg-trello-status" style="font-size:12px;min-height:18px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;background:rgba(62,107,232,.1);border-color:rgba(62,107,232,.3);color:#6B8FE8" onclick="salvarConfig()">Salvar</button>
+        <button class="btn btn-outline btn-sm" onclick="testarTrello()">Testar</button>
+        <button class="btn btn-outline btn-sm" onclick="syncTrello()">Sync agora</button>
+      </div>
     </div>
   </div>
 
@@ -1391,9 +1468,12 @@ function setFazerView(v) {
   fazerView = v;
   document.getElementById('fazer-list-view').style.display = v==='list' ? 'block' : 'none';
   document.getElementById('fazer-kanban-view').style.display = v==='kanban' ? 'block' : 'none';
+  document.getElementById('fazer-trello-view').style.display = v==='trello' ? 'block' : 'none';
   document.getElementById('viewList').style.cssText = v==='list' ? 'color:var(--accent);border-color:var(--accent)' : '';
   document.getElementById('viewKanban').style.cssText = v==='kanban' ? 'color:var(--accent);border-color:var(--accent)' : '';
+  document.getElementById('viewTrello').style.cssText = v==='trello' ? 'color:#6B8FE8;border-color:rgba(62,107,232,.5)' : 'color:#6B8FE8;border-color:rgba(62,107,232,.3)';
   if (v==='kanban') renderKanban();
+  if (v==='trello') syncTrello();
 }
 
 function renderTarefas() {
@@ -1937,6 +2017,20 @@ function renderConfig() {
   const asInput=document.getElementById('cfg-apps-script');
   if(asInput) asInput.value=S.config?.appsScript||APPS_SCRIPT;
 
+  // Calendar
+  const calGet=document.getElementById('cfg-cal-get');
+  if(calGet&&!calGet.value) calGet.value=S.config?.calendarGet||'';
+  const calPost=document.getElementById('cfg-cal-post');
+  if(calPost&&!calPost.value) calPost.value=S.config?.calendarPost||'';
+
+  // Trello
+  const tKey=document.getElementById('cfg-trello-key');
+  if(tKey&&!tKey.value) tKey.value=S.config?.trelloKey||'';
+  const tTok=document.getElementById('cfg-trello-token');
+  if(tTok&&!tTok.value) tTok.value=S.config?.trelloToken?'••••••••••••••••':'';
+  const tBoard=document.getElementById('cfg-trello-board');
+  if(tBoard&&!tBoard.value) tBoard.value=S.config?.trelloBoard||'';
+
   try {
     const kb=((localStorage.getItem(SK)||'').length/1024).toFixed(1);
     const el=document.getElementById('cfg-storage-size');
@@ -1962,17 +2056,30 @@ function renderConfig() {
 }
 
 function salvarConfig() {
-  const keyInput=document.getElementById('cfg-api-key').value;
-  const asInput=document.getElementById('cfg-apps-script').value;
-  if(!S.config) S.config={};
-  if(keyInput&&!keyInput.includes('•')){
-    S.config.anthropicKey=keyInput;
-    localStorage.setItem('sov_api_key',keyInput);
+  const keyInput   = document.getElementById('cfg-api-key')?.value || '';
+  const asInput    = document.getElementById('cfg-apps-script')?.value || '';
+  const calGet     = document.getElementById('cfg-cal-get')?.value || '';
+  const calPost    = document.getElementById('cfg-cal-post')?.value || '';
+  const trelloKey  = document.getElementById('cfg-trello-key')?.value || '';
+  const trelloTok  = document.getElementById('cfg-trello-token')?.value || '';
+  const trelloBoard= document.getElementById('cfg-trello-board')?.value || '';
+
+  if (!S.config) S.config = {};
+  if (keyInput && !keyInput.includes('•')) {
+    S.config.anthropicKey = keyInput;
+    localStorage.setItem('sov_api_key', keyInput);
   }
-  if(asInput) S.config.appsScript=asInput;
+  if (asInput)      S.config.appsScript   = asInput;
+  if (calGet)       S.config.calendarGet  = calGet;
+  if (calPost)      S.config.calendarPost = calPost;
+  if (trelloKey)    S.config.trelloKey    = trelloKey;
+  if (trelloTok && !trelloTok.includes('•')) S.config.trelloToken = trelloTok;
+  if (trelloBoard)  S.config.trelloBoard  = trelloBoard;
+
   save(); showToast('Configurações salvas ✓');
-  document.getElementById('cfg-api-status').innerHTML='<span style="color:var(--teal)">✓ Salvo com sucesso</span>';
-  setTimeout(renderConfig,500);
+  const st = document.getElementById('cfg-api-status');
+  if (st) st.innerHTML = '<span style="color:var(--teal)">✓ Salvo com sucesso</span>';
+  setTimeout(renderConfig, 500);
 }
 
 async function testarAPI() {
@@ -2125,6 +2232,16 @@ negociacao:`<div class="modal-title" style="color:var(--teal)">Nova Negociação
 <div class="field"><label class="label">Notas</label><textarea id="m-neg-o" rows="2"></textarea></div>
 <div class="modal-actions"><button class="btn btn-teal btn-full" onclick="saveNegociacao()">Salvar</button></div>`,
 
+'evento-cal':`<div class="modal-title" style="color:var(--teal)">Novo Evento na Agenda</div>
+<div class="field"><label class="label">Título</label><input id="m-ec-t" placeholder="Ex: Reunião com Carlos Mendes"></div>
+<div class="row2">
+  <div class="field"><label class="label">Data início</label><input id="m-ec-di" type="datetime-local"></div>
+  <div class="field"><label class="label">Data fim</label><input id="m-ec-df" type="datetime-local"></div>
+</div>
+<div class="field"><label class="label">Local</label><input id="m-ec-l" placeholder="Endereço ou link de videoconferência"></div>
+<div class="field"><label class="label">Descrição</label><textarea id="m-ec-d" rows="2" placeholder="Notas ou objetivo..."></textarea></div>
+<div class="modal-actions"><button class="btn btn-teal btn-full" onclick="criarEventoCalendar()">Criar no Google Calendar</button></div>`,
+
 func:`<div class="modal-title" style="color:var(--teal)">Novo Funcionário</div>
 <div class="row2">
   <div class="field"><label class="label">Nome</label><input id="m-fn"></div>
@@ -2200,7 +2317,224 @@ if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
 
+// ═══════════════════════════════════
+// GOOGLE CALENDAR
+// ═══════════════════════════════════
+async function fetchCalendar() {
+  const url = S.config?.calendarGet;
+  if (!url) return [];
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    return d.ok ? d.eventos : [];
+  } catch { return []; }
+}
+
+async function criarEventoCalendar() {
+  const url = S.config?.calendarPost;
+  const titulo = document.getElementById('m-ec-t').value.trim();
+  if (!titulo) return;
+  if (!url) { showToast('Configure a URL do Calendar em ⚙️ Config'); closeModal(); return; }
+
+  const inicio = document.getElementById('m-ec-di').value;
+  const fim    = document.getElementById('m-ec-df').value;
+  const local  = document.getElementById('m-ec-l').value;
+  const desc   = document.getElementById('m-ec-d').value;
+
+  closeModal();
+  showToast('Criando evento...');
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo, inicio: new Date(inicio).toISOString(), fim: new Date(fim).toISOString(), local, descricao: desc })
+    });
+    const d = await r.json();
+    if (d.ok) { showToast('Evento criado ✓'); renderHomeCalendar(); }
+    else showToast('Erro ao criar evento');
+  } catch { showToast('Erro de conexão'); }
+}
+
+async function renderHomeCalendar() {
+  const eventos = await fetchCalendar();
+  const section = document.getElementById('calSection');
+  const wrap    = document.getElementById('homeCalendar');
+  const fazerSection = document.getElementById('calFazerSection');
+  const fazerWrap    = document.getElementById('fazerCalendar');
+  if (!eventos.length) {
+    if (section) section.style.display = 'none';
+    return;
+  }
+  if (section) section.style.display = 'block';
+  if (fazerSection) fazerSection.style.display = 'block';
+
+  const html = eventos.map(e => {
+    const dt = e.diaInteiro ? e.inicio : new Date(e.inicio).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div style="padding:10px 16px;border-bottom:1px solid var(--b1);display:flex;gap:12px;align-items:flex-start">
+      <div style="flex-shrink:0;width:40px;text-align:center">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--teal)">📅</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px">${dt}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${e.titulo}</div>
+        ${e.local ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">📍 ${e.local}</div>` : ''}
+      </div>
+      ${e.link ? `<a href="${e.link}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;font-family:var(--mono)">Ver →</a>` : ''}
+    </div>`;
+  }).join('');
+
+  if (wrap) wrap.innerHTML = html;
+  if (fazerWrap) fazerWrap.innerHTML = html;
+}
+
+async function testarCalendar() {
+  const status = document.getElementById('cfg-cal-status');
+  const url = document.getElementById('cfg-cal-get').value;
+  if (!url) { status.innerHTML = '<span style="color:var(--red)">⚠ Configure a URL primeiro</span>'; return; }
+  status.innerHTML = '<span style="color:var(--muted)">Testando...</span>';
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.ok) status.innerHTML = `<span style="color:var(--teal)">✓ Conectado — ${d.total} eventos encontrados</span>`;
+    else status.innerHTML = '<span style="color:var(--red)">✗ Erro na resposta</span>';
+  } catch { status.innerHTML = '<span style="color:var(--red)">✗ Erro de conexão</span>'; }
+}
+
+// ═══════════════════════════════════
+// TRELLO
+// ═══════════════════════════════════
+async function fetchTrello(endpoint) {
+  const key   = S.config?.trelloKey;
+  const token = S.config?.trelloToken;
+  if (!key || !token) return null;
+  try {
+    const r = await fetch(`https://api.trello.com/1${endpoint}?key=${key}&token=${token}`);
+    return await r.json();
+  } catch { return null; }
+}
+
+async function syncTrello() {
+  const key   = S.config?.trelloKey;
+  const token = S.config?.trelloToken;
+  const board = S.config?.trelloBoard;
+  if (!key || !token || !board) { showToast('Configure Trello em ⚙️ Config'); return; }
+
+  showToast('Sincronizando Trello...');
+
+  try {
+    // Busca listas do board
+    const lists = await fetchTrello(`/boards/${board}/lists`);
+    if (!lists) { showToast('Erro ao conectar Trello'); return; }
+
+    // Busca cards de todas as listas
+    const cards = await fetchTrello(`/boards/${board}/cards`);
+    if (!cards) return;
+
+    // Mapeia listas Trello → colunas SOV
+    const listaMap = {};
+    lists.forEach(l => {
+      const nome = l.name.toLowerCase();
+      if (nome.includes('backlog') || nome.includes('lista') || nome.includes('to do')) listaMap[l.id] = 'backlog';
+      else if (nome.includes('fazer') || nome.includes('doing') || nome.includes('fazendo')) listaMap[l.id] = 'doing';
+      else if (nome.includes('revisão') || nome.includes('review') || nome.includes('testing')) listaMap[l.id] = 'review';
+      else if (nome.includes('feito') || nome.includes('done') || nome.includes('concluído')) listaMap[l.id] = 'done';
+      else listaMap[l.id] = 'todo';
+    });
+
+    // Sincroniza cards com tarefas SOV
+    let novos = 0;
+    cards.forEach(card => {
+      const col = listaMap[card.idList] || 'backlog';
+      const existe = S.tarefas.find(t => t.trelloId === card.id);
+      if (existe) {
+        existe.coluna = col;
+        existe.status = col === 'done' ? 'done' : 'backlog';
+      } else {
+        S.tarefas.push({
+          id: S.nextId++,
+          titulo: card.name,
+          area: 'trello',
+          prioridade: 'media',
+          energia: 'media',
+          dia: 'hoje',
+          status: col === 'done' ? 'done' : 'backlog',
+          coluna: col,
+          trelloId: card.id,
+          trelloUrl: card.shortUrl,
+          origem: 'trello'
+        });
+        novos++;
+      }
+    });
+
+    save();
+    renderTrelloBoard(lists, cards, listaMap);
+    renderKanban();
+    renderTarefas();
+    showToast(`Trello sincronizado ✓ ${novos ? `— ${novos} novos cards` : ''}`);
+  } catch(e) { showToast('Erro na sincronização'); }
+}
+
+async function moveCardTrello(trelloId, novaLista) {
+  const key   = S.config?.trelloKey;
+  const token = S.config?.trelloToken;
+  if (!key || !token || !trelloId) return;
+  try {
+    await fetch(`https://api.trello.com/1/cards/${trelloId}?key=${key}&token=${token}&idList=${novaLista}`, { method: 'PUT' });
+  } catch {}
+}
+
+function renderTrelloBoard(lists, cards, listaMap) {
+  if (!lists || !cards) {
+    document.getElementById('trelloBoard').innerHTML = '<div style="color:var(--muted);font-size:13px">Clique em Sync para carregar</div>';
+    return;
+  }
+  document.getElementById('trelloBoard').innerHTML = `
+    <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none">
+      ${lists.map(l => {
+        const lcards = cards.filter(c => c.idList === l.id);
+        return `<div style="flex-shrink:0;width:220px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r)">
+          <div style="padding:10px 12px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between">
+            <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:#6B8FE8">${l.name.toUpperCase()}</div>
+            <div style="font-family:var(--mono);font-size:10px;background:var(--b1);border-radius:10px;padding:2px 7px;color:var(--muted)">${lcards.length}</div>
+          </div>
+          <div style="padding:8px;display:flex;flex-direction:column;gap:6px">
+            ${lcards.map(card => `
+              <a href="${card.shortUrl}" target="_blank" style="display:block;background:var(--card);border:1px solid var(--b1);border-radius:8px;padding:10px;text-decoration:none">
+                <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px">${card.name}</div>
+                ${card.desc ? `<div style="font-size:10px;color:var(--muted)">${card.desc.slice(0,60)}${card.desc.length>60?'...':''}</div>` : ''}
+                <div style="font-size:10px;color:#6B8FE8;margin-top:4px;font-family:var(--mono)">Ver no Trello →</div>
+              </a>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function testarTrello() {
+  const status = document.getElementById('cfg-trello-status');
+  const key   = document.getElementById('cfg-trello-key').value;
+  const token = document.getElementById('cfg-trello-token').value;
+  const board = document.getElementById('cfg-trello-board').value;
+  if (!key || !token) { status.innerHTML = '<span style="color:var(--red)">⚠ Configure Key e Token</span>'; return; }
+  status.innerHTML = '<span style="color:var(--muted)">Testando...</span>';
+  try {
+    const r = await fetch(`https://api.trello.com/1/members/me?key=${key}&token=${token}`);
+    const d = await r.json();
+    if (d.id) {
+      status.innerHTML = `<span style="color:var(--teal)">✓ Conectado como ${d.fullName}</span>`;
+      if (board) {
+        const bl = await fetch(`https://api.trello.com/1/boards/${board}/lists?key=${key}&token=${token}`);
+        const lists = await bl.json();
+        if (lists.length) status.innerHTML += `<br><span style="color:var(--teal);font-size:11px">Board: ${lists.length} listas encontradas</span>`;
+      }
+    } else status.innerHTML = '<span style="color:var(--red)">✗ Key ou Token inválidos</span>';
+  } catch { status.innerHTML = '<span style="color:var(--red)">✗ Erro de conexão</span>'; }
+}
+
+// ═══════════════════════════════════
 // INIT
+// ═══════════════════════════════════
 initTopbar();
 updateTopbar();
 renderHome();
@@ -2209,6 +2543,8 @@ renderCapturar();
 setTimeout(()=>{
   setSyncStatus('syncing');
   syncAll().catch(()=>setSyncStatus('offline'));
+  // Carrega Calendar se configurado
+  if (S.config?.calendarGet) renderHomeCalendar();
 },2000);
 </script>
 </body>
